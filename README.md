@@ -10,24 +10,16 @@ zip"
 
 git clone https://github.com/Dylanmurzello/kali-nhterm-magisk-fix
   cd kali-nhterm-magisk-fix
-
-  ```
-  ### Execute the Script:
-Run the fix script 
-with execution permissions:
-```
   chmod +x scripts/fix-nh.sh
-```
+  su
+  bash
 
 
+bash
+# from Termux or
+adb shell scripts/fix-nh.sh
+bash
 
-
-## TL;DR
-```sh
-# from Termux or adb shell
-bash scripts/fix-nh.sh
-# then open the Kali profile in NH-Terminal
-```
 
 ## What this fixes
 - NH-Terminal shows `line 35: -c: command not found (code 127)` on launch.
