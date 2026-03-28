@@ -33,29 +33,4 @@ git clone https://github.com/Dylanmurzello/kali-nhterm-magisk-fix
   bash
 adb shell scripts/fix-nh.sh
 bash
-
-
-## What this fixes
-- NH-Terminal shows `line 35: -c: command not found (code 127)` on launch.
-- Editing random 'kali' scripts doesn't help because NH-Terminal uses its own launcher.
-- Forwarding to Termux's boot-kali fails (`inaccessible or not found`) due to app sandboxing.
-- `su` inside NH-Terminal is missing — modern Magisk exposes `magisk` CLI instead.
-
-## How it works
-We replace the app's launcher at:`/data/data/com.offsec.nhterm/files/usr/bin/kali`with a tiny shim that runs:
-
-MAGISK su --mount-master -c "/system/bin/chroot /data/local/nhsystem/kalifs /bin/bash -l"
-
-Where `MAGISK` is auto-detected (`/debug_ramdisk/magisk`, `/sbin/magisk`, or `$(magisk --path)/magisk`).
-
-bash scripts/fix-nh.sh
-cp scripts/kali /data/data/com.offsec.nhterm/files/usr/bin/kali
-chmod 755 /data/data/com.offsec.nhterm/files/usr/bin/kali
-sed -i 's/\r$//' /data/data/com.offsec.nhterm/files/usr/bin/kali
-
-
-Open **Kali** in NH-Terminal → you should be at `root@kali`.
-
-magisk --path            # e.g. /debug_ramdisk
-$(magisk --path)/magisk su --mount-master -c id
 ```
