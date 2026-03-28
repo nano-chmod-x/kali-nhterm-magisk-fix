@@ -1,22 +1,36 @@
-patch this 
-# kali-nhterm-magisk-fix
-# "/data/data/com.termux/files/usr"
-# "/data/local/tmp/Boot-Animation-install.
-zip"
-
-**Fix NH-Terminal (NetHunter Terminal) to reliably launch the Kali chroot on modern Magisk using the Magisk CLI** — no `su`, no Termux paths, no `-c: not found`.
-
 ```
+#!/data/data/com.termux/files/usr/bin/bash
+# Patch NH-Terminal's launcher to a stable Magisk+chroot shim
+# Run from Termux or adb shell after a cold start if needed.
+
+TARGET="/data/data/com.offsec.nhterm/files/usr/bin/kali"
+
+cat > "$TARGET" <<'EOF'
+#!/system/bin/sh
+if [ -x /debug_ramdisk/magisk ]; then
+  MAGISK=/debug_ramdisk/magisk
+elif [ -x /sbin/magisk ]; then
+  MAGISK=/sbin/magisk
+else
+  MAGISK="$(magisk --path 2>/dev/null)/magisk"
+fi
+[ -x "$MAGISK" ] || { echo "[nh] magisk CLI not found"; exit 127; }
+KALIFS="/data/local/nhsystem/kalifs"
+[ -d "$KALIFS" ] || { echo "[nh] missing $KALIFS"; exit 1; }
+exec "$MAGISK" su --mount-master -c "/system/bin/chroot $KALIFS /bin/bash -l"
+EOF
+
+chmod 755 "$TARGET"
+# normalize CRLF if any
+sed -i 's/\r$//' "$TARGET" 2>/dev/null || true
+echo "[*] Patched $TARG
+ET"
 
 git clone https://github.com/Dylanmurzello/kali-nhterm-magisk-fix
   cd kali-nhterm-magisk-fix
   chmod +x scripts/fix-nh.sh
   su
   bash
-
-
-bash
-# from Termux or
 adb shell scripts/fix-nh.sh
 bash
 
@@ -29,48 +43,19 @@ bash
 
 ## How it works
 We replace the app's launcher at:`/data/data/com.offsec.nhterm/files/usr/bin/kali`with a tiny shim that runs:
-```
+
 MAGISK su --mount-master -c "/system/bin/chroot /data/local/nhsystem/kalifs /bin/bash -l"
-```
+
 Where `MAGISK` is auto-detected (`/debug_ramdisk/magisk`, `/sbin/magisk`, or `$(magisk --path)/magisk`).
 
-## Install
-
-### Option A — one-shot patch
-```
 bash scripts/fix-nh.sh
-```
-
-### Option B — manual
-```
 cp scripts/kali /data/data/com.offsec.nhterm/files/usr/bin/kali
 chmod 755 /data/data/com.offsec.nhterm/files/usr/bin/kali
 sed -i 's/\r$//' /data/data/com.offsec.nhterm/files/usr/bin/kali
-```
+
 
 Open **Kali** in NH-Terminal → you should be at `root@kali`.
 
-## Verify Magisk CLI
-```
 magisk --path            # e.g. /debug_ramdisk
 $(magisk --path)/magisk su --mount-master -c id
 ```
-
-If that fails, enable **Allow external apps** in Magisk settings and ensure NH-Terminal/NetHunter are not on DenyList.
-
-## Notes
-- NH-Terminal may restore its original launcher only on a cold start. If so, run `scripts/fix-nh.sh` again.
-- To hide the minimal-login banner inside Kali:
-```
-touch ~/.hushlogin
-```
-
-## Troubleshooting
-- **code 126 "No such file"** (file exists): wrong shebang → use `#!/system/bin/sh`.
-- **`su not found`**: never use plain `su`; use the Magisk CLI as shown.
-- **`Bad system call (159)`**: missing `--mount-master` or broken chroot. Reinstall chroot via NetHunter app.
-- **CRLF^M**: `sed -i 's/\r$//' /path/to/script`.
-
-## Credits
-- Original investigation & fixes by Dylan & thanks to Aravind Potluri (CIPH3R) for his boot-kali script
-- License: MIT.
