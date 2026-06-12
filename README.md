@@ -1,3 +1,5 @@
+### Patch with bash script 
+
 ```
 #!/data/data/com.termux/files/usr/bin/bash
 # Patch NH-Terminal's launcher to a stable Magisk+chroot shim
